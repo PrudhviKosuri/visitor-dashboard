@@ -1,0 +1,72 @@
+.App {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation for loading states */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Card hover effects */
+.MuiCard-root {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.MuiCard-root:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Status indicators */
+.status-online {
+  color: #4caf50;
+}
+
+.status-offline {
+  color: #f44336;
+}
+
+.status-pending {
+  color: #ff9800;
+}
+
+/* Responsive table */
+.MuiTableContainer-root {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Chart containers */
+.recharts-responsive-container {
+  font-size: 12px;
+}
