@@ -7,6 +7,16 @@ import {
   Typography,
   Box,
   Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  Avatar,
+  IconButton,
+  Button,
 } from '@mui/material';
 import {
   BarChart,
@@ -16,63 +26,90 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts';
 import { useVisitors } from '../context/VisitorContext';
-import { format, startOfDay, isToday } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import PeopleIcon from '@mui/icons-material/People';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import GroupIcon from '@mui/icons-material/Group';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import BusinessIcon from '@mui/icons-material/Business';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import LiveTracker from '../components/LiveTracker';
+import RoomAnalytics from '../components/RoomAnalytics';
+import SpotRegistration from '../components/SpotRegistration';
 
 const Dashboard = () => {
   const { visitors } = useVisitors();
 
   // Calculate statistics
-  const todayVisitors = visitors.filter(visitor => isToday(visitor.checkInTime));
-  const currentVisitorsInside = todayVisitors.filter(visitor => visitor.status === 'Checked-in').length;
-  const totalTodayVisitors = todayVisitors.length;
+  const totalVisitorsCount = 1247; // Mock number from screenshot
+  const currentVisitorsInside = visitors.filter(visitor => visitor.status === 'Checked In').length;
+  const peakHour = '2-4 PM';
+  const avgVisitorsPerHour = 45;
 
-  // Peak hours data
-  const hourlyData = Array.from({ length: 24 }, (_, hour) => {
-    const count = todayVisitors.filter(visitor => 
-      visitor.checkInTime.getHours() === hour
-    ).length;
-    return {
-      hour: `${hour.toString().padStart(2, '0')}:00`,
-      visitors: count,
-    };
-  }).filter(data => data.visitors > 0);
+  // Generate hourly data for bar chart (9AM to 5PM)
+  const hourlyData = [
+    { hour: '9AM', visitors: 40 },
+    { hour: '10AM', visitors: 55 },
+    { hour: '11AM', visitors: 70 },
+    { hour: '12PM', visitors: 90 },
+    { hour: '1PM', visitors: 110 },
+    { hour: '2PM', visitors: 130 },
+    { hour: '3PM', visitors: 140 },
+    { hour: '4PM', visitors: 125 },
+    { hour: '5PM', visitors: 95 },
+  ];
 
-  // Visitor type distribution
-  const purposeData = todayVisitors.reduce((acc, visitor) => {
-    const purpose = visitor.purpose || 'Other';
-    acc[purpose] = (acc[purpose] || 0) + 1;
-    return acc;
-  }, {});
+  // Get recent visitors
+  const recentVisitors = visitors.slice(0, 1);
 
-  const pieData = Object.entries(purposeData).map(([purpose, count]) => ({
-    name: purpose,
-    value: count,
-  }));
+  // Helper function to get initials for avatar
+  const getInitials = (name) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  // Helper function to get avatar color
+  const getAvatarColor = (name) => {
+    const colors = ['#1e3a5f', '#2c5aa0', '#3498db', '#5f9ea0', '#4682b4'];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
 
-  const StatCard = ({ title, value, icon, color = 'primary' }) => (
-    <Card sx={{ height: '100%' }}>
+  const StatCard = ({ title, value, subtitle, icon, iconBg }) => (
+    <Card sx={{ height: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box>
-            <Typography color="textSecondary" gutterBottom variant="overline">
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', fontWeight: 500 }}>
               {title}
             </Typography>
-            <Typography variant="h4" component="div" color={color}>
+            <Typography variant="h3" sx={{ mt: 1, mb: 0.5, fontWeight: 600, color: '#1e3a5f' }}>
               {value}
             </Typography>
+            {subtitle && (
+              <Typography variant="caption" color="success.main" sx={{ display: 'flex', alignItems: 'center' }}>
+                <TrendingUpIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                {subtitle}
+              </Typography>
+            )}
           </Box>
-          <Box sx={{ color: `${color}.main` }}>
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              borderRadius: 2,
+              backgroundColor: iconBg || '#e3f2fd',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             {icon}
           </Box>
         </Box>
@@ -81,136 +118,205 @@ const Dashboard = () => {
   );
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Dashboard Overview
-      </Typography>
-      
-      {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Visitors Today"
-            value={totalTodayVisitors}
-            icon={<PeopleIcon sx={{ fontSize: 40 }} />}
-            color="primary"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Current Visitors Inside"
-            value={currentVisitorsInside}
-            icon={<TrendingUpIcon sx={{ fontSize: 40 }} />}
-            color="success"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Peak Hour Today"
-            value={hourlyData.length > 0 ? hourlyData.reduce((max, curr) => 
-              curr.visitors > max.visitors ? curr : max
-            ).hour : 'N/A'}
-            icon={<AccessTimeIcon sx={{ fontSize: 40 }} />}
-            color="warning"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Unique Companies"
-            value={new Set(todayVisitors.map(v => v.company)).size}
-            icon={<BusinessIcon sx={{ fontSize: 40 }} />}
-            color="info"
-          />
-        </Grid>
-      </Grid>
-
-      {/* Charts */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Hourly Visitor Traffic
-            </Typography>
-            <Box sx={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
-                <BarChart data={hourlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="hour" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="visitors" fill="#1976d2" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Box>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Visit Purpose Distribution
-            </Typography>
-            <Box sx={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </Box>
-          </Paper>
-        </Grid>
-      </Grid>
-
-      {/* Recent Activity */}
-      <Paper sx={{ p: 3, mt: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Recent Check-ins
+    <Container maxWidth="xl" sx={{ mt: 4, mb: 4, px: 3 }}>
+      {/* Header */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" sx={{ fontWeight: 600, color: '#1e3a5f', mb: 0.5 }}>
+          Dashboard Overview
         </Typography>
-        {todayVisitors.slice(0, 5).map(visitor => (
-          <Box
-            key={visitor.id}
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              py: 1,
-              borderBottom: '1px solid #eee',
-            }}
-          >
-            <Box>
-              <Typography variant="body1" fontWeight="medium">
-                {visitor.name}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                {visitor.company} - Host: {visitor.host}
-              </Typography>
-            </Box>
-            <Box sx={{ textAlign: 'right' }}>
-              <Typography variant="body2">
-                {format(visitor.checkInTime, 'HH:mm')}
-              </Typography>
-              <Typography
-                variant="caption"
-                color={visitor.status === 'Checked-in' ? 'success.main' : 'text.secondary'}
-              >
-                {visitor.status}
-              </Typography>
-            </Box>
+        <Typography variant="body2" color="text.secondary">
+          Welcome to your visitor management dashboard
+        </Typography>
+      </Box>
+
+      {/* Summary Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="TOTAL VISITORS"
+            value="1,247"
+            subtitle="+12% from last month"
+            icon={<PeopleIcon sx={{ fontSize: 32, color: '#1e3a5f' }} />}
+            iconBg="#e8eef5"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="CURRENT VISITORS"
+            value={currentVisitorsInside}
+            subtitle="Active now"
+            icon={<GroupIcon sx={{ fontSize: 32, color: '#4caf50' }} />}
+            iconBg="#e8f5e9"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="PEAK HOURS"
+            value={peakHour}
+            subtitle={`Avg ${avgVisitorsPerHour} visitors/hour`}
+            icon={<AccessTimeIcon sx={{ fontSize: 32, color: '#ff9800' }} />}
+            iconBg="#fff3e0"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="VISITOR STATS"
+            value="Analytics"
+            icon={<BarChartIcon sx={{ fontSize: 32, color: '#9c27b0' }} />}
+            iconBg="#f3e5f5"
+          />
+        </Grid>
+      </Grid>
+
+      {/* Live Tracker */}
+      <LiveTracker />
+
+      {/* Room Analytics */}
+      <RoomAnalytics />
+
+      {/* Spot Registration and Quick Actions */}
+      <SpotRegistration />
+
+      {/* Visitor Statistics Chart */}
+      <Paper sx={{ p: 3, mb: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e3a5f' }}>
+              Visitor Statistics
+            </Typography>
           </Box>
-        ))}
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <IconButton size="small">
+              <RefreshIcon />
+            </IconButton>
+            <Button variant="outlined" size="small" sx={{ textTransform: 'none' }}>
+              View
+            </Button>
+          </Box>
+        </Box>
+        <Box sx={{ width: '100%', height: 350 }}>
+          <ResponsiveContainer>
+            <BarChart data={hourlyData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+              <XAxis 
+                dataKey="hour" 
+                axisLine={false}
+                tickLine={false}
+                style={{ fontSize: '12px', fill: '#666' }}
+              />
+              <YAxis 
+                axisLine={false}
+                tickLine={false}
+                style={{ fontSize: '12px', fill: '#666' }}
+              />
+              <Tooltip 
+                cursor={{ fill: 'rgba(30, 58, 95, 0.1)' }}
+                contentStyle={{ borderRadius: '8px', border: '1px solid #e0e0e0' }}
+              />
+              <Bar 
+                dataKey="visitors" 
+                fill="#1e3a5f" 
+                radius={[8, 8, 0, 0]}
+                maxBarSize={50}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </Box>
+      </Paper>
+
+      {/* Recent Visitors Table */}
+      <Paper sx={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <Box sx={{ p: 3, pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e3a5f' }}>
+            Recent Visitors
+          </Typography>
+          <Button 
+            endIcon={<ArrowForwardIcon />} 
+            sx={{ textTransform: 'none', color: '#1e3a5f', fontWeight: 600 }}
+          >
+            View All
+          </Button>
+        </Box>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#fafafa' }}>
+                <TableCell sx={{ fontWeight: 600, color: '#666' }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#666' }}>Company</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#666' }}>Host</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#666' }}>Check-in Time</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#666' }}>Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {recentVisitors.length > 0 ? (
+                recentVisitors.map((visitor) => (
+                  <TableRow key={visitor.id} sx={{ '&:hover': { backgroundColor: '#fafafa' } }}>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            bgcolor: getAvatarColor(visitor.name),
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {getInitials(visitor.name)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {visitor.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {visitor.email}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {visitor.company}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {visitor.purpose}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">{visitor.host}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {format(visitor.checkInTime, 'hh:mm a')}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={visitor.status}
+                        size="small"
+                        sx={{
+                          backgroundColor: visitor.status === 'Checked In' ? '#e8f5e9' : '#f5f5f5',
+                          color: visitor.status === 'Checked In' ? '#2e7d32' : '#666',
+                          fontWeight: 600,
+                          fontSize: '0.75rem',
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No recent visitors
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Paper>
     </Container>
   );

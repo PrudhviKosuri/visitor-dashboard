@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -14,9 +15,11 @@ import {
   Box,
   TextField,
   MenuItem,
+  Menu,
   InputAdornment,
   IconButton,
   Tooltip,
+  Collapse,
 } from '@mui/material';
 import {
   CheckCircle,
@@ -28,24 +31,45 @@ import {
   Refresh,
 } from '@mui/icons-material';
 import { useVisitors } from '../context/VisitorContext';
-import { format, isToday } from 'date-fns';
+import { format, isToday, isSameDay } from 'date-fns';
 
 const VisitorTable = () => {
   const { visitors, checkOutVisitor } = useVisitors();
+  const location = useLocation();
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('today');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [companyFilter, setCompanyFilter] = useState('all');
+  const [methodFilter, setMethodFilter] = useState('all');
+  const [companyAnchor, setCompanyAnchor] = useState(null);
+  const [methodAnchor, setMethodAnchor] = useState(null);
 
-  // Filter visitors based on selected criteria
-  const filteredVisitors = visitors.filter(visitor => {
+  // Sync search bar with `q` query param for deep links and navbar search
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q') || '';
+    setSearchTerm(q);
+  }, [location.search]);
+
+  // Base filters (exclude company/method so option lists can adapt)
+  const baseFiltered = useMemo(() => visitors.filter(visitor => {
+    // Normalize status values e.g., 'Checked In' or 'Checked-in' -> 'checkedin'
+    const normalize = (s) => s.toLowerCase().replace(/[\s-]/g, '');
+    const vStatus = normalize(visitor.status);
     // Status filter
-    if (filter !== 'all' && visitor.status.toLowerCase() !== filter) {
+    if (filter !== 'all' && vStatus !== filter) {
       return false;
     }
 
     // Date filter
     if (dateFilter === 'today' && !isToday(visitor.checkInTime)) {
       return false;
+    }
+    if (dateFilter === 'specific') {
+      if (!selectedDate) return false;
+      const sel = new Date(selectedDate);
+      if (!isSameDay(visitor.checkInTime, sel)) return false;
     }
 
     // Search filter
@@ -56,7 +80,48 @@ const VisitorTable = () => {
     }
 
     return true;
-  });
+  }), [visitors, filter, dateFilter, selectedDate, searchTerm]);
+
+  // Derive dynamic option lists based on the opposite filter and base filters
+  const availableCompanyOptions = useMemo(() => {
+    const counts = new Map();
+    baseFiltered
+      .filter(v => methodFilter === 'all' || v.method === methodFilter)
+      .forEach(v => counts.set(v.company, (counts.get(v.company) || 0) + 1));
+    return Array.from(counts.entries()) // [company, count]
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => a[0].localeCompare(b[0]));
+  }, [baseFiltered, methodFilter]);
+
+  const availableMethodOptions = useMemo(() => {
+    const counts = new Map();
+    baseFiltered
+      .filter(v => companyFilter === 'all' || v.company === companyFilter)
+      .forEach(v => counts.set(v.method, (counts.get(v.method) || 0) + 1));
+    return Array.from(counts.entries()) // [method, count]
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => a[0].localeCompare(b[0]));
+  }, [baseFiltered, companyFilter]);
+
+  // Auto-reset selections that are no longer valid
+  useEffect(() => {
+    if (companyFilter !== 'all' && !availableCompanyOptions.some(([c]) => c === companyFilter)) {
+      setCompanyFilter('all');
+    }
+  }, [availableCompanyOptions, companyFilter]);
+
+  useEffect(() => {
+    if (methodFilter !== 'all' && !availableMethodOptions.some(([m]) => m === methodFilter)) {
+      setMethodFilter('all');
+    }
+  }, [availableMethodOptions, methodFilter]);
+
+  // Final filtered list applying dynamic company/method filters
+  const filteredVisitors = useMemo(() => baseFiltered.filter(visitor => {
+    if (companyFilter !== 'all' && visitor.company !== companyFilter) return false;
+    if (methodFilter !== 'all' && visitor.method !== methodFilter) return false;
+    return true;
+  }), [baseFiltered, companyFilter, methodFilter]);
 
   const handleCheckOut = (visitorId) => {
     checkOutVisitor(visitorId);
@@ -74,15 +139,19 @@ const VisitorTable = () => {
   };
 
   const getStatusChip = (status) => {
+    const normalized = status.toLowerCase().replace(/[\s-]/g, '');
     return (
       <Chip
         label={status}
-        color={status === 'Checked-in' ? 'success' : 'default'}
+        color={normalized === 'checkedin' ? 'success' : normalized === 'checkedout' ? 'error' : normalized === 'pending' ? 'warning' : 'default'}
         size="small"
-        icon={status === 'Checked-in' ? <CheckCircle /> : <ExitToApp />}
+        icon={normalized === 'checkedin' ? <CheckCircle /> : <ExitToApp />}
       />
     );
   };
+
+  const uniqueCompanies = availableCompanyOptions.map(([c]) => c);
+  const uniqueMethods = availableMethodOptions.map(([m]) => m);
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
@@ -125,8 +194,9 @@ const VisitorTable = () => {
             sx={{ minWidth: 120 }}
           >
             <MenuItem value="all">All Status</MenuItem>
-            <MenuItem value="checked-in">Checked-in</MenuItem>
-            <MenuItem value="checked-out">Checked-out</MenuItem>
+            <MenuItem value="checkedin">Checked-in</MenuItem>
+            <MenuItem value="checkedout">Checked-out</MenuItem>
+            <MenuItem value="pending">Pending</MenuItem>
           </TextField>
 
           <TextField
@@ -135,11 +205,25 @@ const VisitorTable = () => {
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
             size="small"
-            sx={{ minWidth: 120 }}
+            sx={{ minWidth: 140 }}
           >
             <MenuItem value="today">Today</MenuItem>
             <MenuItem value="all">All Dates</MenuItem>
+            <MenuItem value="specific">Specific Date</MenuItem>
           </TextField>
+          <Collapse in={dateFilter === 'specific'} timeout={250} orientation="horizontal">
+            <TextField
+              label="Select date"
+              type="date"
+              size="medium"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ ml: 1, minWidth: 240 }}
+              required
+              fullWidth={false}
+            />
+          </Collapse>
 
           <Typography variant="body2" color="textSecondary">
             Showing {filteredVisitors.length} of {visitors.length} visitors
@@ -151,14 +235,48 @@ const VisitorTable = () => {
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }}>
           <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+            <TableRow>
               <TableCell><strong>Visitor Name</strong></TableCell>
-              <TableCell><strong>Company/Purpose</strong></TableCell>
+              <TableCell>
+                <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                  <strong>Company/Purpose</strong>
+                  <Button size="small" variant="text" onClick={(e) => setCompanyAnchor(e.currentTarget)}>
+                    {companyFilter === 'all' ? 'All' : companyFilter}
+                  </Button>
+                  <Menu
+                    anchorEl={companyAnchor}
+                    open={Boolean(companyAnchor)}
+                    onClose={() => setCompanyAnchor(null)}
+                  >
+                    <MenuItem onClick={() => { setCompanyFilter('all'); setCompanyAnchor(null); }}>All</MenuItem>
+                    {availableCompanyOptions.map(([c, count]) => (
+                      <MenuItem key={c} onClick={() => { setCompanyFilter(c); setCompanyAnchor(null); }}>{c}</MenuItem>
+                    ))}
+                  </Menu>
+                </Box>
+              </TableCell>
               <TableCell><strong>Host/Resident</strong></TableCell>
               <TableCell><strong>Check-in Time</strong></TableCell>
               <TableCell><strong>Check-out Time</strong></TableCell>
               <TableCell><strong>Status</strong></TableCell>
-              <TableCell><strong>Method</strong></TableCell>
+              <TableCell>
+                <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                  <strong>Method</strong>
+                  <Button size="small" variant="text" onClick={(e) => setMethodAnchor(e.currentTarget)}>
+                    {methodFilter === 'all' ? 'All' : methodFilter}
+                  </Button>
+                  <Menu
+                    anchorEl={methodAnchor}
+                    open={Boolean(methodAnchor)}
+                    onClose={() => setMethodAnchor(null)}
+                  >
+                    <MenuItem onClick={() => { setMethodFilter('all'); setMethodAnchor(null); }}>All</MenuItem>
+                    {availableMethodOptions.map(([m, count]) => (
+                      <MenuItem key={m} onClick={() => { setMethodFilter(m); setMethodAnchor(null); }}>{m}</MenuItem>
+                    ))}
+                  </Menu>
+                </Box>
+              </TableCell>
               <TableCell><strong>Actions</strong></TableCell>
             </TableRow>
           </TableHead>
@@ -167,8 +285,7 @@ const VisitorTable = () => {
               <TableRow 
                 key={visitor.id}
                 sx={{ 
-                  '&:nth-of-type(odd)': { backgroundColor: '#fafafa' },
-                  '&:hover': { backgroundColor: '#f0f0f0' }
+                  '&:hover': { backgroundColor: (theme) => theme.palette.action.hover }
                 }}
               >
                 <TableCell>
@@ -208,21 +325,7 @@ const VisitorTable = () => {
                   </Box>
                 </TableCell>
                 <TableCell>
-                  {visitor.status === 'Checked-in' ? (
-                    <Button
-                      variant="outlined"
-                      color="secondary"
-                      size="small"
-                      startIcon={<ExitToApp />}
-                      onClick={() => handleCheckOut(visitor.id)}
-                    >
-                      Check Out
-                    </Button>
-                  ) : (
-                    <Typography variant="caption" color="textSecondary">
-                      Completed
-                    </Typography>
-                  )}
+                  <Typography variant="caption" color="textSecondary">—</Typography>
                 </TableCell>
               </TableRow>
             ))}
@@ -243,7 +346,7 @@ const VisitorTable = () => {
       <Box sx={{ mt: 3, p: 2, backgroundColor: '#f9f9f9', borderRadius: 1 }}>
         <Typography variant="body2" color="textSecondary">
           <strong>Live Updates:</strong> This table refreshes automatically every 30 seconds. 
-          Current visitors inside: {filteredVisitors.filter(v => v.status === 'Checked-in').length}
+          Current visitors inside: {filteredVisitors.filter(v => v.status.toLowerCase().replace(/[\s-]/g, '') === 'checkedin').length}
         </Typography>
       </Box>
     </Container>

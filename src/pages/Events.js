@@ -6,11 +6,10 @@ import {
   Box,
   Card,
   CardContent,
-  Button,
   Grid,
   Chip,
-  Divider,
   Alert,
+  Avatar,
   IconButton,
   Badge,
   Dialog,
@@ -20,31 +19,41 @@ import {
   ListItem,
   ListItemText,
   ListItemAvatar,
-  Avatar,
+  Button,
+  Divider,
 } from '@mui/material';
 import {
   CheckCircle,
-  Cancel,
-  Schedule,
   Business,
   Person,
   AccessTime,
+  EventAvailable,
+  Event,
   Block,
   Close,
+  Cancel,
+  LocationOn,
+  Groups,
+  Schedule,
+  ChecklistRtl,
 } from '@mui/icons-material';
 import { useVisitors } from '../context/VisitorContext';
 import { format } from 'date-fns';
 
-const Approvals = () => {
-  const { pendingApprovals, rejectedApprovals, approveVisitor, rejectVisitor, reApproveRejectedVisitor } = useVisitors();
+const Events = () => {
+  const { eventRequests, approvedEvents, rejectedEvents, approveEvent, rejectEvent, approveRejectedEvent } = useVisitors();
   const [openRejected, setOpenRejected] = useState(false);
 
-  const handleApprove = (approvalId) => {
-    approveVisitor(approvalId);
+  const handleApprove = (eventId) => {
+    approveEvent(eventId);
   };
 
-  const handleReject = (approvalId) => {
-    rejectVisitor(approvalId);
+  const handleReject = (eventId) => {
+    rejectEvent(eventId);
+  };
+
+  const handleApproveRejected = (eventId) => {
+    approveRejectedEvent(eventId);
   };
 
   const handleOpenRejected = () => {
@@ -53,10 +62,6 @@ const Approvals = () => {
 
   const handleCloseRejected = () => {
     setOpenRejected(false);
-  };
-
-  const handleReApproveRejected = (approvalId) => {
-    reApproveRejectedVisitor(approvalId);
   };
 
   const getInitials = (name) => {
@@ -75,13 +80,13 @@ const Approvals = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
-          <Typography variant="h4" gutterBottom>
-            Visitor Approval Panel
+          <Typography variant="h4" sx={{ fontWeight: 600, color: '#1e3a5f', mb: 0.5 }}>
+            Event Requests
           </Typography>
-          <Typography variant="body1" color="textSecondary">
-            Review and approve pending visitor requests
+          <Typography variant="body2" color="text.secondary">
+            Review and manage event requests
           </Typography>
         </Box>
         <IconButton
@@ -91,31 +96,51 @@ const Approvals = () => {
             '&:hover': { backgroundColor: '#ffcdd2' },
           }}
         >
-          <Badge badgeContent={rejectedApprovals.length} color="error">
+          <Badge badgeContent={rejectedEvents.length} color="error">
             <Block sx={{ color: '#d32f2f' }} />
           </Badge>
         </IconButton>
       </Box>
 
-      {pendingApprovals.length === 0 ? (
+      {eventRequests.length === 0 ? (
         <Alert severity="info" sx={{ mb: 3 }}>
-          No pending approvals at this time. All visitor requests have been processed.
+          No pending event requests at this time.
         </Alert>
       ) : (
         <Alert severity="warning" sx={{ mb: 3 }}>
-          You have {pendingApprovals.length} pending visitor request(s) waiting for approval.
+          You have {eventRequests.length} pending event request(s) waiting for approval.
         </Alert>
       )}
 
       <Grid container spacing={3}>
-        {pendingApprovals.map((approval) => (
-          <Grid item xs={12} md={6} lg={4} key={approval.id}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {eventRequests.map((event) => (
+          <Grid item xs={12} md={6} lg={4} key={event.id}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ flexGrow: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography variant="h6" component="div">
-                    {approval.name}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Avatar
+                      sx={{
+                        width: 44,
+                        height: 44,
+                        bgcolor: '#1e3a5f',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <Event />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h6" component="div" sx={{ lineHeight: 1.2 }}>
+                        {event.eventName}
+                      </Typography>
+                      <Chip
+                        label={event.eventType}
+                        size="small"
+                        sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }}
+                      />
+                    </Box>
+                  </Box>
                   <Chip
                     icon={<Schedule />}
                     label="Pending"
@@ -126,47 +151,76 @@ const Approvals = () => {
 
                 <Box sx={{ mb: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Person fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                    <Typography variant="body2" color="text.secondary">
+                      Organizer:
+                    </Typography>
+                  </Box>
+                  <Typography variant="body1" sx={{ ml: 3 }}>
+                    {event.organizer}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <Business fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
                     <Typography variant="body2" color="text.secondary">
                       Company:
                     </Typography>
                   </Box>
                   <Typography variant="body1" sx={{ ml: 3 }}>
-                    {approval.company}
+                    {event.company}
                   </Typography>
                 </Box>
 
                 <Box sx={{ mb: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Person fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                    <EventAvailable fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
                     <Typography variant="body2" color="text.secondary">
-                      Host:
+                      Event Date:
                     </Typography>
                   </Box>
                   <Typography variant="body1" sx={{ ml: 3 }}>
-                    {approval.host}
+                    {format(event.eventDate, 'MMM dd, yyyy HH:mm')}
                   </Typography>
                 </Box>
 
                 <Box sx={{ mb: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <AccessTime fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                    <LocationOn fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
                     <Typography variant="body2" color="text.secondary">
-                      Requested Time:
+                      Venue:
                     </Typography>
                   </Box>
                   <Typography variant="body1" sx={{ ml: 3 }}>
-                    {format(approval.requestedTime, 'MMM dd, yyyy HH:mm')}
+                    {event.venue}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Groups fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                    <Typography variant="body2" color="text.secondary">
+                      Expected Attendees:
+                    </Typography>
+                  </Box>
+                  <Typography variant="body1" sx={{ ml: 3 }}>
+                    {event.expectedAttendees} people
                   </Typography>
                 </Box>
 
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Purpose:
-                  </Typography>
-                  <Typography variant="body1">
-                    {approval.purpose}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <ChecklistRtl fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                    <Typography variant="body2" color="text.secondary">
+                      Requirements:
+                    </Typography>
+                  </Box>
+                  <Box sx={{ ml: 3, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {event.requirements.map((req, idx) => (
+                      <Chip key={idx} label={req} size="small" variant="outlined" />
+                    ))}
+                  </Box>
                 </Box>
 
                 <Divider sx={{ my: 2 }} />
@@ -176,7 +230,7 @@ const Approvals = () => {
                     variant="outlined"
                     color="error"
                     startIcon={<Cancel />}
-                    onClick={() => handleReject(approval.id)}
+                    onClick={() => handleReject(event.id)}
                   >
                     Reject
                   </Button>
@@ -184,7 +238,7 @@ const Approvals = () => {
                     variant="contained"
                     color="success"
                     startIcon={<CheckCircle />}
-                    onClick={() => handleApprove(approval.id)}
+                    onClick={() => handleApprove(event.id)}
                   >
                     Approve
                   </Button>
@@ -198,47 +252,47 @@ const Approvals = () => {
       {/* Instructions */}
       <Paper sx={{ p: 3, mt: 4, backgroundColor: '#f8f9fa' }}>
         <Typography variant="h6" gutterBottom>
-          Approval Process
+          Event Approval Process
         </Typography>
         <Typography variant="body2" paragraph>
-          • <strong>Approve:</strong> Visitor will be immediately checked in and added to the active visitor list
+          • <strong>Approve:</strong> Event will be scheduled and venue/resources will be allocated
         </Typography>
         <Typography variant="body2" paragraph>
-          • <strong>Reject:</strong> Visitor request will be removed and they will be notified
+          • <strong>Reject:</strong> Event request will be declined and organizer will be notified
         </Typography>
         <Typography variant="body2">
-          • All actions are logged for security and audit purposes
+          • All actions are logged with timestamps for audit purposes
         </Typography>
       </Paper>
 
-      {/* Rejected Approvals Dialog */}
+      {/* Rejected Events Dialog */}
       <Dialog
         open={openRejected}
         onClose={handleCloseRejected}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Block color="error" />
-            <Typography variant="h6">Recent Rejected Requests</Typography>
+            <Typography variant="h6">Rejected Event Requests</Typography>
           </Box>
           <IconButton onClick={handleCloseRejected} size="small">
             <Close />
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          {rejectedApprovals.length === 0 ? (
+          {rejectedEvents.length === 0 ? (
             <Box sx={{ py: 3, textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                No rejected requests yet
+                No rejected event requests
               </Typography>
             </Box>
           ) : (
             <List>
-              {rejectedApprovals.map((rejection) => (
+              {rejectedEvents.map((event) => (
                 <ListItem
-                  key={rejection.id}
+                  key={event.id}
                   sx={{
                     backgroundColor: '#f8f9fa',
                     borderRadius: 1,
@@ -253,28 +307,30 @@ const Approvals = () => {
                       <ListItemAvatar>
                         <Avatar
                           sx={{
-                            bgcolor: getAvatarColor(rejection.name),
+                            bgcolor: '#1e3a5f',
                             width: 40,
                             height: 40,
-                            fontSize: '0.875rem',
                           }}
                         >
-                          {getInitials(rejection.name)}
+                          <Event fontSize="small" />
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
                         primary={
                           <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            {rejection.name}
+                            {event.eventName}
                           </Typography>
                         }
                         secondary={
                           <>
                             <Typography variant="body2" color="text.secondary">
-                              {rejection.company} • {rejection.purpose}
+                              {event.organizer} • {event.company}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {format(event.eventDate, 'MMM dd, yyyy HH:mm')} • {event.venue}
                             </Typography>
                             <Typography variant="caption" color="error">
-                              Rejected: {format(rejection.rejectedTime, 'MMM dd, HH:mm')}
+                              Rejected: {format(event.rejectedTime, 'MMM dd, HH:mm')}
                             </Typography>
                           </>
                         }
@@ -285,7 +341,7 @@ const Approvals = () => {
                       color="success"
                       size="small"
                       startIcon={<CheckCircle />}
-                      onClick={() => handleReApproveRejected(rejection.id)}
+                      onClick={() => handleApproveRejected(event.id)}
                       sx={{ minWidth: '100px' }}
                     >
                       Approve
@@ -301,4 +357,4 @@ const Approvals = () => {
   );
 };
 
-export default Approvals;
+export default Events;
