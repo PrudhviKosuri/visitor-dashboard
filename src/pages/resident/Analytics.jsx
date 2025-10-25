@@ -19,6 +19,7 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
+import { weeklyTrendData, visitorTypeData } from '../../data/dummyResidentData';
 
 const Analytics = () => {
   // Dummy data for weekly visits bar chart
@@ -43,14 +44,8 @@ const Analytics = () => {
     { month: 'Oct', visitors: 175 },
   ];
 
-  // Dummy data for visitor types donut chart
-  const visitorTypesData = [
-    { name: 'Clients', value: 120, color: '#3b82f6' },
-    { name: 'Delivery', value: 80, color: '#10b981' },
-    { name: 'Partners', value: 65, color: '#f59e0b' },
-    { name: 'Consultants', value: 45, color: '#8b5cf6' },
-    { name: 'Others', value: 35, color: '#ec4899' },
-  ];
+  // Using imported visitor type data (consistent with other portals)
+  const visitorTypesData = visitorTypeData;
 
   // Dummy data for peak hours
   const peakHoursData = [

@@ -39,30 +39,33 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import LiveTracker from '../components/LiveTracker';
 import RoomAnalytics from '../components/RoomAnalytics';
 import SpotRegistration from '../components/SpotRegistration';
+import { adminStats, liveOccupancyData, visitorFrequencyData, peakHoursData } from '../data/dummyAdminData';
 
 const Dashboard = () => {
   const { visitors } = useVisitors();
 
-  // Calculate statistics
-  const currentVisitorsInside = visitors.filter(visitor => visitor.status === 'Checked In').length;
-  const peakHour = '2-4 PM';
-  const avgVisitorsPerHour = 45;
+  // Use consistent dummy data from centralized file
+  const currentVisitorsInside = adminStats.currentOccupancy;
+  const peakHour = '1pm';
+  const avgVisitorsPerHour = 8;
 
-  // Generate hourly data for bar chart (9AM to 5PM)
-  const hourlyData = [
-    { hour: '9AM', visitors: 40 },
-    { hour: '10AM', visitors: 55 },
-    { hour: '11AM', visitors: 70 },
-    { hour: '12PM', visitors: 90 },
-    { hour: '1PM', visitors: 110 },
-    { hour: '2PM', visitors: 130 },
-    { hour: '3PM', visitors: 140 },
-    { hour: '4PM', visitors: 125 },
-    { hour: '5PM', visitors: 95 },
-  ];
+  // Using imported data
+  const hourlyData = peakHoursData.map(item => ({
+    hour: item.hour,
+    visitors: item.visitors
+  }));
 
-  // Get recent visitors
-  const recentVisitors = visitors.slice(0, 1);
+  // Get recent visitors from dummy data and map to expected format
+  const recentVisitors = liveOccupancyData.slice(0, 5).map(visitor => ({
+    id: visitor.id,
+    name: visitor.name,
+    email: `${visitor.name.toLowerCase().replace(' ', '.')}@example.com`,
+    company: visitor.resident,
+    purpose: visitor.purpose,
+    host: visitor.resident,
+    checkInTime: new Date(`2025-10-25 ${visitor.checkInTime}`),
+    status: visitor.status === 'Approved' ? 'Checked In' : 'Pending',
+  }));
 
   // Helper function to get initials for avatar
   const getInitials = (name) => {
@@ -132,8 +135,8 @@ const Dashboard = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="TOTAL VISITORS"
-            value="1,247"
+            title="TOTAL VISITORS TODAY"
+            value={adminStats.totalVisitorsToday}
             subtitle="+12% from last month"
             icon={<PeopleIcon sx={{ fontSize: 32, color: '#1e3a5f' }} />}
             iconBg="#e8eef5"
@@ -141,26 +144,27 @@ const Dashboard = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="CURRENT VISITORS"
-            value={currentVisitorsInside}
-            subtitle="Active now"
+            title="ACTIVE RESIDENTS"
+            value={adminStats.totalActiveResidents}
+            subtitle="Startup members"
             icon={<GroupIcon sx={{ fontSize: 32, color: '#4caf50' }} />}
             iconBg="#e8f5e9"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="PEAK HOURS"
-            value={peakHour}
-            subtitle={`Avg ${avgVisitorsPerHour} visitors/hour`}
+            title="CURRENT OCCUPANCY"
+            value={adminStats.currentOccupancy}
+            subtitle={`Peak at ${peakHour}`}
             icon={<AccessTimeIcon sx={{ fontSize: 32, color: '#ff9800' }} />}
             iconBg="#fff3e0"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="VISITOR STATS"
-            value="Analytics"
+            title="WATCHLIST ALERTS"
+            value={adminStats.watchlistAlerts}
+            subtitle="Requires attention"
             icon={<BarChartIcon sx={{ fontSize: 32, color: '#9c27b0' }} />}
             iconBg="#f3e5f5"
           />

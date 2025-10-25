@@ -1,14 +1,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Building2, Shield } from 'lucide-react';
+import { User, Building2, Shield, Lock } from 'lucide-react';
 import '../../auth.css';
 import AuthNavbar from '../../components/auth/AuthNavbar';
+import { visitorStats } from '../../data/dummyVisitorData';
 
-const Card = ({ icon: Icon, title, desc, to }) => {
+const Card = ({ icon: Icon, title, desc, to, direct }) => {
   const navigate = useNavigate();
   return (
     <button
-      onClick={() => navigate(`/auth/login?role=${to}`)}
+      onClick={() => navigate(direct ? to : `/auth/login?role=${to}`)}
       className="group relative overflow-hidden rounded-2xl border border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm p-6 shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 text-left w-full"
     >
       <div className="flex items-center gap-4">
@@ -31,6 +32,13 @@ const LandingPage = () => {
       <AuthNavbar />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         <div className="text-center mb-10">
+          {/* Welcome Message with Visitor Count */}
+          <div className="mb-4 bg-gradient-to-r from-blue-500/10 to-sky-500/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4 max-w-2xl mx-auto">
+            <p className="text-lg font-semibold text-blue-700 dark:text-blue-400">
+              🎉 Welcome! <span className="text-blue-900 dark:text-blue-300">{visitorStats.todaysVisitors} visitors</span> registered today
+            </p>
+          </div>
+          
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Intelligent Visitor Management Ecosystem
           </h1>
@@ -39,7 +47,7 @@ const LandingPage = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card
             icon={User}
             title="Visitor Portal"
@@ -57,6 +65,13 @@ const LandingPage = () => {
             title="Admin Portal"
             desc="Oversee operations, analytics, and devices."
             to="admin"
+          />
+          <Card
+            icon={Lock}
+            title="Privacy & Compliance"
+            desc="Data protection, audit logs, and GDPR compliance."
+            to="/compliance/dashboard"
+            direct={true}
           />
         </div>
 

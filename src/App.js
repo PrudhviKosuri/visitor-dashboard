@@ -27,6 +27,10 @@ import VisitorRequests from './pages/resident/Requests';
 import InviteVisitors from './pages/resident/Invite';
 import ResidentAnalytics from './pages/resident/Analytics';
 import ResidentProfile from './pages/resident/Profile';
+import ComplianceDashboard from './pages/compliance/Dashboard';
+import AuditLogs from './pages/compliance/AuditLogs';
+import DataManagement from './pages/compliance/DataManagement';
+import ComplianceSettings from './pages/compliance/Settings';
 import './App.css';
 const theme = createTheme({
   palette: {
@@ -75,15 +79,18 @@ function AppShell() {
   const isAuth = location.pathname.startsWith('/auth');
   const isVisitorPortal = location.pathname.startsWith('/visitor');
   const isResidentPortal = location.pathname.startsWith('/resident');
+  const isCompliancePortal = location.pathname.startsWith('/compliance');
 
   return (
     <Box className="App" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {!isAuth && !isVisitorPortal && !isResidentPortal && <Navbar />}
+      {!isAuth && !isVisitorPortal && !isResidentPortal && !isCompliancePortal && <Navbar />}
       <Box component="main" sx={{ flexGrow: 1 }}>
         <Routes>
+          {/* Redirect root to landing page */}
+          <Route path="/" element={<Navigate to="/auth/landing" replace />} />
+          
           {/* Existing app routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
           <Route path="/visitors" element={<RequireAuth><VisitorTable /></RequireAuth>} />
           <Route path="/approvals" element={<Navigate to="/visitors" replace />} />
           <Route path="/events" element={<RequireAuth><Events /></RequireAuth>} />
@@ -112,13 +119,19 @@ function AppShell() {
           <Route path="/resident/analytics" element={<ResidentAnalytics />} />
           <Route path="/resident/profile" element={<ResidentProfile />} />
 
+          {/* Privacy & Compliance Center Routes */}
+          <Route path="/compliance/dashboard" element={<ComplianceDashboard />} />
+          <Route path="/compliance/audit-logs" element={<AuditLogs />} />
+          <Route path="/compliance/data-management" element={<DataManagement />} />
+          <Route path="/compliance/settings" element={<ComplianceSettings />} />
+
           {/* Admin Portal Routes (placeholder) */}
           <Route path="/admin/dashboard" element={<Dashboard />} />
 
           <Route path="*" element={<Navigate to="/auth/landing" replace />} />
         </Routes>
       </Box>
-      {!isAuth && !isVisitorPortal && !isResidentPortal && <Footer />}
+      {!isAuth && !isVisitorPortal && !isResidentPortal && !isCompliancePortal && <Footer />}
     </Box>
   );
 }

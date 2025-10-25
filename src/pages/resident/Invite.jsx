@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ResidentSidebar from '../../components/ResidentSidebar';
 import { User, FileText, Calendar, Mail, CheckCircle } from 'lucide-react';
+import { recentInvitations } from '../../data/dummyResidentData';
 
 const Invite = () => {
   const [showToast, setShowToast] = useState(false);
@@ -11,32 +12,16 @@ const Invite = () => {
     dateTime: '',
   });
 
-  const [recentInvites, setRecentInvites] = useState([
-    {
-      id: 1,
-      visitorName: 'Alex Thompson',
-      purpose: 'Product Demonstration',
-      dateTime: '2025-10-26T14:00',
-      status: 'Sent',
-      sentDate: '2025-10-24',
-    },
-    {
-      id: 2,
-      visitorName: 'Jessica Miller',
-      purpose: 'Business Consultation',
-      dateTime: '2025-10-27T10:00',
-      status: 'Sent',
-      sentDate: '2025-10-23',
-    },
-    {
-      id: 3,
-      visitorName: 'Robert Brown',
-      purpose: 'Partnership Meeting',
-      dateTime: '2025-10-28T11:30',
-      status: 'Sent',
-      sentDate: '2025-10-22',
-    },
-  ]);
+  const [recentInvites, setRecentInvites] = useState(
+    recentInvitations.map(inv => ({
+      id: inv.id,
+      visitorName: inv.name,
+      purpose: inv.purpose,
+      dateTime: `${inv.date}T${inv.time}`,
+      status: inv.status,
+      sentDate: inv.date,
+    }))
+  );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
