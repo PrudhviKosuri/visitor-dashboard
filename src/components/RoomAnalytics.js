@@ -29,7 +29,6 @@ const RoomAnalytics = () => {
     }
   };
 
-  const totalRooms = rooms.length;
   const availableRooms = rooms.filter(r => r.status === 'Available').length;
   const occupiedRooms = rooms.filter(r => r.status === 'Occupied').length;
   const fullRooms = rooms.filter(r => r.status === 'Full').length;

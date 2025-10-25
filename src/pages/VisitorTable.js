@@ -34,7 +34,7 @@ import { useVisitors } from '../context/VisitorContext';
 import { format, isToday, isSameDay } from 'date-fns';
 
 const VisitorTable = () => {
-  const { visitors, checkOutVisitor } = useVisitors();
+  const { visitors } = useVisitors();
   const location = useLocation();
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -123,9 +123,7 @@ const VisitorTable = () => {
     return true;
   }), [baseFiltered, companyFilter, methodFilter]);
 
-  const handleCheckOut = (visitorId) => {
-    checkOutVisitor(visitorId);
-  };
+
 
   const getMethodIcon = (method) => {
     switch (method) {
@@ -150,8 +148,7 @@ const VisitorTable = () => {
     );
   };
 
-  const uniqueCompanies = availableCompanyOptions.map(([c]) => c);
-  const uniqueMethods = availableMethodOptions.map(([m]) => m);
+
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>

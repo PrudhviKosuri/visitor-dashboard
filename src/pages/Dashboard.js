@@ -28,7 +28,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useVisitors } from '../context/VisitorContext';
-import { format, isToday } from 'date-fns';
+import { format } from 'date-fns';
 import PeopleIcon from '@mui/icons-material/People';
 import GroupIcon from '@mui/icons-material/Group';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -44,7 +44,6 @@ const Dashboard = () => {
   const { visitors } = useVisitors();
 
   // Calculate statistics
-  const totalVisitorsCount = 1247; // Mock number from screenshot
   const currentVisitorsInside = visitors.filter(visitor => visitor.status === 'Checked In').length;
   const peakHour = '2-4 PM';
   const avgVisitorsPerHour = 45;

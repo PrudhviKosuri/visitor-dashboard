@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { format } from 'date-fns';
 
 const VisitorContext = createContext();
 
@@ -394,8 +393,8 @@ export const VisitorProvider = ({ children }) => {
   const [approvedEvents, setApprovedEvents] = useState([]);
   const [rejectedEvents, setRejectedEvents] = useState([]);
   const [devices, setDevices] = useState(generateDevices());
-  const [staff, setStaff] = useState(generateStaff());
-  const [rooms, setRooms] = useState(generateRooms());
+  const [staff] = useState(generateStaff());
+  const [rooms] = useState(generateRooms());
   const [visitTypes, setVisitTypes] = useState(generateVisitTypes());
 
   // Auto-refresh data every 30 seconds

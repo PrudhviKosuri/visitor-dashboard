@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, IconButton, Badge, Avatar, InputBase, Menu, MenuItem, ListItemText } from '@mui/material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import PeopleIcon from '@mui/icons-material/People';
-import ApprovalIcon from '@mui/icons-material/Approval';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import DesktopWindowsIcon from '@mui/icons-material/DesktopWindows';
 import SearchIcon from '@mui/icons-material/Search';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';

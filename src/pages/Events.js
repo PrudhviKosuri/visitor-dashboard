@@ -26,7 +26,6 @@ import {
   CheckCircle,
   Business,
   Person,
-  AccessTime,
   EventAvailable,
   Event,
   Block,
@@ -41,7 +40,7 @@ import { useVisitors } from '../context/VisitorContext';
 import { format } from 'date-fns';
 
 const Events = () => {
-  const { eventRequests, approvedEvents, rejectedEvents, approveEvent, rejectEvent, approveRejectedEvent } = useVisitors();
+  const { eventRequests, rejectedEvents, approveEvent, rejectEvent, approveRejectedEvent } = useVisitors();
   const [openRejected, setOpenRejected] = useState(false);
 
   const handleApprove = (eventId) => {
@@ -64,19 +63,7 @@ const Events = () => {
     setOpenRejected(false);
   };
 
-  const getInitials = (name) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase();
-  };
 
-  const getAvatarColor = (name) => {
-    const colors = ['#1e3a5f', '#2c5aa0', '#3498db', '#5f9ea0', '#4682b4'];
-    const index = name.charCodeAt(0) % colors.length;
-    return colors[index];
-  };
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
